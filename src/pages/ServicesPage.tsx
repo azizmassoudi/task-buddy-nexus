@@ -1,8 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { ServiceGrid } from '@/components/services/ServiceGrid';
 import { CategoryFilter } from '@/components/services/CategoryFilter';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   mockServices, 
   getServicesByCategory, 
@@ -11,7 +12,7 @@ import {
   ServiceStatus 
 } from '@/data/mockServices';
 import { Input } from '@/components/ui/input';
-import { Search, Filter } from 'lucide-react';
+import { Search, Filter, Plus } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -34,22 +35,22 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 
 const ServicesPage = () => {
+  const { user, currentRole } = useAuth();
+  const navigate = useNavigate();
+
   const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredServices, setFilteredServices] = useState<Service[]>(mockServices);
   const [priceRange, setPriceRange] = useState([0, 5000]);
   const [statusFilter, setStatusFilter] = useState<ServiceStatus | 'All'>('All');
 
-  // Filter services based on all filters
   useEffect(() => {
     let services = mockServices;
     
-    // Filter by category
     if (selectedCategory) {
       services = getServicesByCategory(selectedCategory);
     }
     
-    // Filter by search term
     if (searchTerm) {
       services = services.filter(service => 
         service.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -58,12 +59,10 @@ const ServicesPage = () => {
       );
     }
     
-    // Filter by price range
     services = services.filter(
       service => service.price >= priceRange[0] && service.price <= priceRange[1]
     );
     
-    // Filter by status
     if (statusFilter !== 'All') {
       services = services.filter(service => service.status === statusFilter);
     }
@@ -71,7 +70,6 @@ const ServicesPage = () => {
     setFilteredServices(services);
   }, [selectedCategory, searchTerm, priceRange, statusFilter]);
 
-  // Handle category change
   const handleCategoryChange = (category: ServiceCategory | null) => {
     setSelectedCategory(category);
   };
@@ -100,6 +98,17 @@ const ServicesPage = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
+            
+            {currentRole === 'admin' && (
+              <Button 
+                variant="default"
+                className="flex items-center gap-2 bg-brand-300 hover:bg-brand-400"
+                onClick={() => navigate('/admin/services/new')}
+              >
+                <Plus className="h-4 w-4" />
+                <span>New Service</span>
+              </Button>
+            )}
             
             <Sheet>
               <SheetTrigger asChild>

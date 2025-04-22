@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
@@ -46,7 +45,6 @@ const ServiceDetailPage = () => {
     );
   }
 
-  // Format the date
   const formattedDate = new Date(service.postedDate).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
@@ -84,11 +82,24 @@ const ServiceDetailPage = () => {
     setMessage('');
   };
 
+  const handleEditService = () => {
+    navigate(`/admin/services/${id}/edit`);
+  };
+
+  const handleDeleteService = () => {
+    if (!confirm('Are you sure you want to delete this service?')) return;
+    
+    toast({
+      title: 'Service Deleted',
+      description: 'The service has been successfully deleted.',
+    });
+    navigate('/services');
+  };
+
   return (
     <Layout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Main Content */}
           <div className="flex-1">
             <div className="mb-6">
               <div className="flex items-center space-x-2 mb-4">
@@ -131,7 +142,6 @@ const ServiceDetailPage = () => {
               </div>
             </div>
             
-            {/* Service Image */}
             <div className="rounded-lg overflow-hidden mb-8 bg-gray-100">
               {service.imageUrl ? (
                 <img 
@@ -146,7 +156,6 @@ const ServiceDetailPage = () => {
               )}
             </div>
             
-            {/* Description */}
             <Card>
               <CardHeader>
                 <CardTitle>Description</CardTitle>
@@ -175,9 +184,7 @@ const ServiceDetailPage = () => {
             </Card>
           </div>
           
-          {/* Right Sidebar */}
           <div className="w-full lg:w-80">
-            {/* Actions Card */}
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle>Service Actions</CardTitle>
@@ -219,10 +226,17 @@ const ServiceDetailPage = () => {
                 
                 {user && currentRole === 'admin' && (
                   <div className="space-y-2">
-                    <Button className="w-full bg-brand-300 hover:bg-brand-400">
+                    <Button 
+                      className="w-full bg-brand-300 hover:bg-brand-400"
+                      onClick={handleEditService}
+                    >
                       Edit Service
                     </Button>
-                    <Button variant="outline" className="w-full text-red-500 border-red-200">
+                    <Button 
+                      variant="outline" 
+                      className="w-full text-red-500 border-red-200 hover:bg-red-50"
+                      onClick={handleDeleteService}
+                    >
                       Delete Service
                     </Button>
                   </div>
@@ -230,7 +244,6 @@ const ServiceDetailPage = () => {
               </CardContent>
             </Card>
             
-            {/* Contact Card */}
             {user && (
               <Card>
                 <CardHeader>

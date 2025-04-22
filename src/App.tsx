@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -53,6 +52,22 @@ const AppRoutes = () => {
             <AdminDashboard />
           </ProtectedRoute>
         } 
+      />
+      <Route 
+        path="/admin/services/new" 
+        element={
+          <ProtectedRoute allowedRole="admin">
+            <ServiceDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route 
+        path="/admin/services/:id/edit" 
+        element={
+          <ProtectedRoute allowedRole="admin">
+            <ServiceDetailPage />
+          </ProtectedRoute>
+        }
       />
       
       {/* Subcontractor routes */}
