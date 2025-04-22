@@ -1,7 +1,7 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth, UserRole } from '@/contexts/AuthContext';
+import { useSelector, useDispatch } from 'react-redux';
+import { login } from '../redux/slices/authSlice.ts'; // Adjust path as needed
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,18 +20,18 @@ import {
   TabsTrigger,
 } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
+import { RootState, AppDispatch } from '../redux/store'; // Adjust path to your store file
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [selectedRole, setSelectedRole] = useState<UserRole>('client');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const { login } = useAuth();
+  const [selectedRole, setSelectedRole] = useState('client');
+
+  const dispatch = useDispatch<AppDispatch>(); // Use typed dispatch
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { loading, error } = useSelector((state: RootState) => state.auth);
 
-  // Default credentials for demo purposes
   const defaultCredentials = {
     admin: 'admin@example.com',
     subcontractor: 'contractor@example.com',
@@ -40,28 +40,24 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
 
     try {
-      // For demo purposes, we'll use the mock login
-      await login(email, password, selectedRole);
+      // Dispatch login thunk and await the payload
+      const  user = await dispatch(login({ email, password }));
       toast({
         title: 'Login successful',
-        description: `Logged in as ${selectedRole}`,
       });
       navigate('/');
-    } catch (error) {
+    } catch (error: any) {
       toast({
         variant: 'destructive',
         title: 'Login failed',
-        description: 'Invalid credentials or user not found',
+        description: error?.message || 'Invalid credentials or user not found',
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
-  const fillDefaultCredentials = (role: UserRole) => {
+  const fillDefaultCredentials = (role: string) => {
     if (role) {
       setEmail(defaultCredentials[role]);
       setPassword('password123'); // Demo password
@@ -83,13 +79,13 @@ const Login = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Tabs defaultValue="client" onValueChange={(value) => setSelectedRole(value as UserRole)}>
+          <Tabs defaultValue="client" onValueChange={(value) => setSelectedRole(value)}>
             <TabsList className="grid grid-cols-3 mb-4">
               <TabsTrigger value="client">Client</TabsTrigger>
               <TabsTrigger value="subcontractor">Contractor</TabsTrigger>
               <TabsTrigger value="admin">Admin</TabsTrigger>
             </TabsList>
-            
+
             {['client', 'subcontractor', 'admin'].map((role) => (
               <TabsContent key={role} value={role}>
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -107,10 +103,7 @@ const Login = () => {
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <Label htmlFor="password">Password</Label>
-                      <a
-                        href="#"
-                        className="text-sm text-brand-500 hover:text-brand-600"
-                      >
+                      <a href="#" className="text-sm text-brand-500 hover:text-brand-600">
                         Forgot password?
                       </a>
                     </div>
@@ -122,23 +115,26 @@ const Login = () => {
                       required
                     />
                   </div>
-                  
+
+                  {/* Optional error display */}
+                  {error && <p className="text-red-500 text-sm">{error}</p>}
+
                   <div className="pt-2">
                     <Button
                       type="submit"
                       className="w-full bg-brand-300 hover:bg-brand-400"
-                      disabled={isSubmitting}
+                      disabled={loading}
                     >
-                      {isSubmitting ? 'Logging in...' : 'Login'}
+                      {loading ? 'Logging in...' : 'Login'}
                     </Button>
                   </div>
-                  
+
                   <div className="pt-2">
                     <Button
                       type="button"
                       variant="outline"
                       className="w-full text-xs"
-                      onClick={() => fillDefaultCredentials(role as UserRole)}
+                      onClick={() => fillDefaultCredentials(role)}
                     >
                       Use demo credentials
                     </Button>
@@ -151,10 +147,7 @@ const Login = () => {
         <CardFooter className="flex flex-col space-y-4">
           <div className="text-center text-sm">
             Don't have an account?{' '}
-            <a
-              href="/register"
-              className="text-brand-500 hover:text-brand-600 font-medium"
-            >
+            <a href="/register" className="text-brand-500 hover:text-brand-600 font-medium">
               Create an account
             </a>
           </div>

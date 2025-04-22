@@ -1,116 +1,84 @@
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Provider } from 'react-redux';
+import { store } from './redux/store';
+import { useSelector } from 'react-redux';
+import { RootState } from './redux/store';
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import Index from "./pages/Index";
-import Login from "./pages/Login";
-import NotFound from "./pages/NotFound";
-import About from "./pages/About";
-import ServicesPage from "./pages/ServicesPage";
-import ServiceDetailPage from "./pages/ServiceDetailPage";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import ClientDashboard from "./pages/client/ClientDashboard";
-import SubcontractorDashboard from "./pages/subcontractor/SubcontractorDashboard";
+// Pages
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Dashboard from './pages/Dashboard';
+import Services from './pages/Services';
+import Jobs from './pages/Jobs';
+import Messages from './pages/Messages';
+import Profile from './pages/Profile';
 
-const queryClient = new QueryClient();
+// Components
+import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 
-// Route guard for protected routes
-const ProtectedRoute = ({ 
-  children, 
-  allowedRole 
-}: { 
-  children: JSX.Element, 
-  allowedRole?: string 
-}) => {
-  const { user, currentRole } = useAuth();
-  
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-  
-  if (allowedRole && currentRole !== allowedRole) {
-    return <Navigate to="/" replace />;
-  }
-  
-  return children;
+const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
+  const { token } = useSelector((state: RootState) => state.auth);
+  return token ? <>{children}</> : <Navigate to="/login" />;
 };
 
-const AppRoutes = () => {
+function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Index />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/about" element={<About />} />
-      <Route path="/services" element={<ServicesPage />} />
-      <Route path="/services/:id" element={<ServiceDetailPage />} />
-      
-      {/* Admin routes */}
-      <Route 
-        path="/admin/dashboard" 
-        element={
-          <ProtectedRoute allowedRole="admin">
-            <AdminDashboard />
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/admin/services/new" 
-        element={
-          <ProtectedRoute allowedRole="admin">
-            <ServiceDetailPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route 
-        path="/admin/services/:id/edit" 
-        element={
-          <ProtectedRoute allowedRole="admin">
-            <ServiceDetailPage />
-          </ProtectedRoute>
-        }
-      />
-      
-      {/* Subcontractor routes */}
-      <Route 
-        path="/contractor/dashboard" 
-        element={
-          <ProtectedRoute allowedRole="subcontractor">
-            <SubcontractorDashboard />
-          </ProtectedRoute>
-        }
-      />
-      
-      {/* Client routes */}
-      <Route 
-        path="/client/dashboard" 
-        element={
-          <ProtectedRoute allowedRole="client">
-            <ClientDashboard />
-          </ProtectedRoute>
-        }
-      />
-      
-      {/* Catch all for 404 */}
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <Provider store={store}>
+      <Router>
+        <div className="min-h-screen flex flex-col">
+          <Navbar />
+          <main className="flex-grow container mx-auto px-4 py-8">
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route
+                path="/"
+                element={
+                  <PrivateRoute>
+                    <Dashboard />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/services"
+                element={
+                  <PrivateRoute>
+                    <Services />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/jobs"
+                element={
+                  <PrivateRoute>
+                    <Jobs />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/messages"
+                element={
+                  <PrivateRoute>
+                    <Messages />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <PrivateRoute>
+                    <Profile />
+                  </PrivateRoute>
+                }
+              />
+            </Routes>
+          </main>
+          <Footer />
+        </div>
+      </Router>
+    </Provider>
   );
-};
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
-  </QueryClientProvider>
-);
+}
 
 export default App;
