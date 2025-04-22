@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,7 +62,20 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				// Service marketplace specific colors
+				brand: {
+					50: "#F1F0FB",
+					100: "#D6BCFA",
+					200: "#B794F4",
+					300: "#9B87F5", // Primary purple
+					400: "#7E69AB", // Secondary purple
+					500: "#6B46C1",
+					600: "#553C9A",
+					700: "#44337A",
+					800: "#1A1F2C", // Dark purple
+					900: "#322659",
+				},
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
