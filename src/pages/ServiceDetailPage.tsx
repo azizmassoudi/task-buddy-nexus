@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+
+import React from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { getServiceById } from '@/data/mockServices';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
+import ServiceForm from '@/components/services/ServiceForm';
 import {
   Card,
   CardContent,
@@ -15,17 +17,63 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { CalendarDays, MapPin, Clock, DollarSign, User, MessageCircle } from 'lucide-react';
+import { CalendarDays, MapPin, Clock, DollarSign, MessageCircle } from 'lucide-react';
 
 const ServiceDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const { user, currentRole } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = React.useState('');
+  
+  const isCreateMode = location.pathname === '/admin/services/new';
+  const isEditMode = location.pathname.includes('/admin/services/') && location.pathname.includes('/edit');
+  const isAdminMode = isCreateMode || isEditMode;
 
   const service = id ? getServiceById(id) : null;
+  
+  // If we're in edit mode but service doesn't exist
+  if (!isCreateMode && isEditMode && !service) {
+    return (
+      <Layout>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+          <h1 className="text-3xl font-bold text-gray-900">Service Not Found</h1>
+          <p className="mt-4 text-lg text-gray-500">
+            The service you're looking for doesn't exist or has been removed.
+          </p>
+          <Button 
+            className="mt-8 bg-brand-300 hover:bg-brand-400"
+            onClick={() => navigate('/services')}
+          >
+            Browse All Services
+          </Button>
+        </div>
+      </Layout>
+    );
+  }
 
+  // Show the service form for create/edit modes
+  if (isAdminMode) {
+    return (
+      <Layout>
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="mb-6">
+            <Button 
+              variant="ghost" 
+              className="text-sm text-gray-500"
+              onClick={() => navigate('/services')}
+            >
+              Back to Services
+            </Button>
+          </div>
+          <ServiceForm service={service} isEdit={isEditMode} />
+        </div>
+      </Layout>
+    );
+  }
+
+  // Regular service detail view for non-admin modes
   if (!service) {
     return (
       <Layout>
