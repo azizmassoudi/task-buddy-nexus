@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
@@ -6,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { ServiceCategory, ServiceStatus, Service } from '@/data/mockServices';
+import { Images } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -33,7 +33,7 @@ const ServiceForm = ({ service, isEdit = false }: ServiceFormProps) => {
   const [title, setTitle] = useState(service?.title || '');
   const [description, setDescription] = useState(service?.description || '');
   const [category, setCategory] = useState<ServiceCategory>(
-    service?.category as ServiceCategory || 'Home Services'
+    (service?.category as ServiceCategory) || 'Plumbing'
   );
   const [location, setLocation] = useState(service?.location || '');
   const [price, setPrice] = useState(service?.price?.toString() || '');
@@ -43,16 +43,21 @@ const ServiceForm = ({ service, isEdit = false }: ServiceFormProps) => {
   const [status, setStatus] = useState<ServiceStatus>(
     service?.status || 'Open'
   );
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | undefined>(
+    service?.imageUrl
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const categories: ServiceCategory[] = [
-    'Home Services',
-    'Professional Services',
-    'Events',
-    'Health & Wellness',
-    'Tech Support',
-    'Education',
-    'Automotive'
+    'Plumbing', 
+    'Electrical', 
+    'Cleaning', 
+    'IT Support', 
+    'Carpentry',
+    'Landscaping',
+    'Moving',
+    'Home Repair'
   ];
   
   const statuses: ServiceStatus[] = [
@@ -61,6 +66,18 @@ const ServiceForm = ({ service, isEdit = false }: ServiceFormProps) => {
     'Completed',
     'Cancelled'
   ];
+  
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -213,6 +230,35 @@ const ServiceForm = ({ service, isEdit = false }: ServiceFormProps) => {
                   </Select>
                 </div>
               )}
+            </div>
+            
+            <div className="space-y-2">
+              <label htmlFor="image" className="text-sm font-medium">
+                Service Image
+              </label>
+              <div className="flex items-center space-x-4">
+                <Input
+                  id="image"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageChange}
+                />
+                <label 
+                  htmlFor="image" 
+                  className="flex items-center cursor-pointer bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-md"
+                >
+                  <Images className="mr-2 h-5 w-5" />
+                  Upload Image
+                </label>
+                {imagePreview && (
+                  <img 
+                    src={imagePreview} 
+                    alt="Service preview" 
+                    className="w-24 h-24 object-cover rounded-md" 
+                  />
+                )}
+              </div>
             </div>
           </div>
         </CardContent>
