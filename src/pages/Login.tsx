@@ -1,7 +1,8 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { login } from '../redux/slices/authSlice.ts'; // Adjust path as needed
+import { login } from '../redux/slices/authSlice'; 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,16 +21,18 @@ import {
   TabsTrigger,
 } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
-import { RootState, AppDispatch } from '../redux/store'; // Adjust path to your store file
+import { RootState, AppDispatch } from '../redux/store'; 
+import { useAuth } from '@/contexts/AuthContext';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [selectedRole, setSelectedRole] = useState('client');
 
-  const dispatch = useDispatch<AppDispatch>(); // Use typed dispatch
+  const dispatch = useDispatch<AppDispatch>(); 
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { login: authLogin } = useAuth();
   const { loading, error } = useSelector((state: RootState) => state.auth);
 
   const defaultCredentials = {
@@ -42,10 +45,11 @@ const Login = () => {
     e.preventDefault();
 
     try {
-      // Dispatch login thunk and await the payload
-      const  user = await dispatch(login({ email, password }));
+      // Use the AuthContext login instead of Redux
+      await authLogin(email, password, selectedRole as any);
       toast({
         title: 'Login successful',
+        description: `Logged in as ${selectedRole}`,
       });
       navigate('/');
     } catch (error: any) {
@@ -58,8 +62,8 @@ const Login = () => {
   };
 
   const fillDefaultCredentials = (role: string) => {
-    if (role) {
-      setEmail(defaultCredentials[role]);
+    if (role in defaultCredentials) {
+      setEmail(defaultCredentials[role as keyof typeof defaultCredentials]);
       setPassword('password123'); // Demo password
     }
   };
@@ -116,7 +120,6 @@ const Login = () => {
                     />
                   </div>
 
-                  {/* Optional error display */}
                   {error && <p className="text-red-500 text-sm">{error}</p>}
 
                   <div className="pt-2">

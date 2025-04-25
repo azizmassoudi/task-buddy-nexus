@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { store } from './redux/store';
@@ -12,6 +13,9 @@ import Services from './pages/Services';
 import Jobs from './pages/Jobs';
 import Messages from './pages/Messages';
 import Profile from './pages/Profile';
+import Index from './pages/Index';
+import NotFound from './pages/NotFound';
+import About from './pages/About';
 
 // Components
 import Navbar from './components/Navbar';
@@ -32,8 +36,10 @@ function App() {
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/" element={<Index />} />
+              <Route path="/about" element={<About />} />
               <Route
-                path="/"
+                path="/dashboard"
                 element={
                   <PrivateRoute>
                     <Dashboard />
@@ -72,6 +78,7 @@ function App() {
                   </PrivateRoute>
                 }
               />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
           <Footer />

@@ -1,62 +1,51 @@
 
 import React from 'react';
 import { Layout } from '@/components/layout/Layout';
-import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
 
 const About = () => {
-  const navigate = useNavigate();
-
   return (
     <Layout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="mb-6">
-          <Button 
-            variant="ghost" 
-            className="text-sm text-gray-500"
-            onClick={() => navigate('/')}
-          >
-            Back to Home
-          </Button>
-        </div>
-
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">About Our Service Platform</h1>
+      <div className="max-w-4xl mx-auto py-16">
+        <h1 className="text-4xl font-bold mb-8 text-gray-900">About Us</h1>
         
-        <div className="prose max-w-none">
-          <p className="text-lg mb-6">
-            Welcome to our comprehensive service platform where homeowners can find qualified professionals
-            for their home improvement and maintenance needs.
+        <div className="prose lg:prose-xl">
+          <p className="text-lg text-gray-700 mb-6">
+            We connect service providers with clients looking for quality work. Our platform makes it easy to find, 
+            book, and manage services all in one place.
           </p>
           
-          <h2 className="text-2xl font-semibold text-gray-800 mt-8 mb-4">Our Mission</h2>
-          <p className="mb-6">
-            We aim to connect homeowners with skilled contractors and service providers to ensure
-            quality work and seamless experiences for all home improvement projects.
+          <h2 className="text-2xl font-semibold mt-12 mb-4 text-gray-900">Our Mission</h2>
+          <p className="text-lg text-gray-700 mb-6">
+            To create a seamless connection between skilled professionals and clients, 
+            ensuring quality service delivery and fair opportunities for all.
           </p>
           
-          <h2 className="text-2xl font-semibold text-gray-800 mt-8 mb-4">How It Works</h2>
-          <div className="grid md:grid-cols-3 gap-8 my-8">
-            <div className="bg-gray-50 p-6 rounded-lg">
-              <h3 className="text-xl font-medium mb-3">For Homeowners</h3>
-              <p>Browse services, read reviews, and hire trusted professionals for your home projects.</p>
+          <h2 className="text-2xl font-semibold mt-12 mb-4 text-gray-900">What We Offer</h2>
+          <div className="grid md:grid-cols-2 gap-8 my-8">
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+              <h3 className="text-xl font-medium text-gray-900 mb-3">For Clients</h3>
+              <ul className="list-disc pl-5 space-y-2 text-gray-700">
+                <li>Easy service discovery</li>
+                <li>Verified professionals</li>
+                <li>Secure payment system</li>
+                <li>Review-based quality control</li>
+              </ul>
             </div>
             
-            <div className="bg-gray-50 p-6 rounded-lg">
-              <h3 className="text-xl font-medium mb-3">For Contractors</h3>
-              <p>Find new clients, showcase your skills, and grow your business through our platform.</p>
-            </div>
-            
-            <div className="bg-gray-50 p-6 rounded-lg">
-              <h3 className="text-xl font-medium mb-3">For Service Providers</h3>
-              <p>Offer specialized services and connect with clients looking for your expertise.</p>
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+              <h3 className="text-xl font-medium text-gray-900 mb-3">For Service Providers</h3>
+              <ul className="list-disc pl-5 space-y-2 text-gray-700">
+                <li>New client opportunities</li>
+                <li>Profile management</li>
+                <li>Job scheduling</li>
+                <li>Payment processing</li>
+              </ul>
             </div>
           </div>
           
-          <h2 className="text-2xl font-semibold text-gray-800 mt-8 mb-4">Our Services</h2>
-          <p className="mb-6">
-            We cover a wide range of services including plumbing, electrical work, carpentry, 
-            landscaping, cleaning, and more. All our listed professionals are vetted to ensure
-            quality workmanship.
+          <h2 className="text-2xl font-semibold mt-12 mb-4 text-gray-900">Contact Us</h2>
+          <p className="text-lg text-gray-700">
+            Have questions or feedback? Reach out to our team at <a href="mailto:support@example.com" className="text-brand-500 hover:text-brand-600">support@example.com</a>.
           </p>
         </div>
       </div>
