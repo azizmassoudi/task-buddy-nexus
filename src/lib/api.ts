@@ -6,6 +6,11 @@ const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  },
+  withCredentials: true,
+  validateStatus: function (status) {
+    return status >= 200 && status < 500; // Accept all status codes less than 500
   },
 });
 
@@ -20,12 +25,22 @@ api.interceptors.request.use((config) => {
 
 // Auth API
 export const authAPI = {
-  login: (email: string, password: string) => 
-    api.post('/auth/login', { email, password }),
+  login: (email: string, password: string) => {
+    const formData = new FormData();
+    formData.append('email', email);
+    formData.append('password', password);
+    return api.post('/auth/token', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
   register: (userData: any) => 
     api.post('/auth/register', userData),
   logout: () => 
     api.post('/auth/logout'),
+  getCurrentUser: () =>
+    api.get('/auth/me'),
 };
 
 // Services API
@@ -34,8 +49,12 @@ export const servicesAPI = {
     api.get('/services'),
   getById: (id: string) => 
     api.get(`/services/${id}`),
-  create: (serviceData: any) => 
-    api.post('/services', serviceData),
+  create: (formData: FormData) => 
+    api.post('/services', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }),
   update: (id: string, serviceData: any) => 
     api.put(`/services/${id}`, serviceData),
   delete: (id: string) => 

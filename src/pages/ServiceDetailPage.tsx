@@ -1,9 +1,6 @@
-
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
-import { getServiceById } from '@/data/mockServices';
-import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -18,25 +15,109 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { CalendarDays, MapPin, Clock, DollarSign, MessageCircle } from 'lucide-react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchServiceById, clearCurrentService } from '@/redux/slices/servicesSlice';
+import { RootState, AppDispatch } from '@/redux/store';
 
 const ServiceDetailPage = () => {
   const { id } = useParams<{ id: string }>();
-  const { user, currentRole } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
   const [message, setMessage] = React.useState('');
+  const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
   
+  const dispatch = useDispatch<AppDispatch>();
+  const { currentService, loading, error } = useSelector((state: RootState) => state.services);
+  
+  // Get auth data from localStorage
+  const getAuthData = () => {
+    const userData = localStorage.getItem('user');
+    const token = localStorage.getItem('token');
+    return {
+      user: userData ? JSON.parse(userData) : null,
+      currentRole: localStorage.getItem('role') || null,
+      isAuthenticated: !!token
+    };
+  };
+
+  const { user, currentRole, isAuthenticated } = getAuthData();
+
   const isCreateMode = location.pathname === '/admin/services/new';
   const isEditMode = location.pathname.includes('/admin/services/') && location.pathname.includes('/edit');
   const isAdminMode = isCreateMode || isEditMode;
 
-  const service = id ? getServiceById(id) : null;
+  // Fetch service by ID on component mount
+  useEffect(() => {
+    if (id) {
+      dispatch(fetchServiceById(id));
+    }
+    return () => {
+      dispatch(clearCurrentService());
+    };
+  }, [dispatch, id]);
+
+  const service = currentService;
   
-  // If we're in edit mode but service doesn't exist
-  if (!isCreateMode && isEditMode && !service) {
+  const getImageUrl = (url: string | undefined) => {
+    if (!url) return null;
+    console.log('Original image URL:', url);
+    
+    // If the URL is already absolute, return it as is
+    if (url.startsWith('http')) {
+      console.log('Using absolute URL:', url);
+      return url;
+    }
+    
+    // If it's a relative URL, prepend the backend URL
+    const fullUrl = url.startsWith('/uploads/') 
+      ? `${backendUrl}${url}`
+      : `${backendUrl}/uploads/${url}`;
+    
+    console.log('Constructed image URL:', fullUrl);
+    return fullUrl;
+  };
+
+  // Add a local fallback image
+  const fallbackImage = '/images/placeholder.svg';
+
+  // Show loading state
+  if (loading) {
     return (
-      <Layout>
+      <div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-gray-900">Loading service details...</h2>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-red-600">Error loading service</h2>
+            <p className="mt-2 text-gray-600">{error}</p>
+            <Button 
+              className="mt-4 bg-brand-300 hover:bg-brand-400"
+              onClick={() => navigate('/services')}
+            >
+              Back to Services
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // If service doesn't exist and we're not in create mode, show 404
+  if (!service && !isCreateMode) {
+    return (
+      <div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
           <h1 className="text-3xl font-bold text-gray-900">Service Not Found</h1>
           <p className="mt-4 text-lg text-gray-500">
@@ -49,14 +130,14 @@ const ServiceDetailPage = () => {
             Browse All Services
           </Button>
         </div>
-      </Layout>
+      </div>
     );
   }
 
   // Show the service form for create/edit modes
   if (isAdminMode) {
     return (
-      <Layout>
+      <div>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="mb-6">
             <Button 
@@ -69,27 +150,7 @@ const ServiceDetailPage = () => {
           </div>
           <ServiceForm service={service} isEdit={isEditMode} />
         </div>
-      </Layout>
-    );
-  }
-
-  // Regular service detail view for non-admin modes
-  if (!service) {
-    return (
-      <Layout>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
-          <h1 className="text-3xl font-bold text-gray-900">Service Not Found</h1>
-          <p className="mt-4 text-lg text-gray-500">
-            The service you're looking for doesn't exist or has been removed.
-          </p>
-          <Button 
-            className="mt-8 bg-brand-300 hover:bg-brand-400"
-            onClick={() => navigate('/services')}
-          >
-            Browse All Services
-          </Button>
-        </div>
-      </Layout>
+      </div>
     );
   }
 
@@ -145,7 +206,7 @@ const ServiceDetailPage = () => {
   };
 
   return (
-    <Layout>
+    <div>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="flex-1">
@@ -193,13 +254,23 @@ const ServiceDetailPage = () => {
             <div className="rounded-lg overflow-hidden mb-8 bg-gray-100">
               {service.imageUrl ? (
                 <img 
-                  src={`${service.imageUrl}?w=800&auto=format`} 
+                  src={getImageUrl(service.imageUrl)} 
                   alt={service.title}
                   className="w-full h-auto object-cover"
+                  onError={(e) => {
+                    // If image fails to load, show local fallback
+                    const target = e.target as HTMLImageElement;
+                    target.src = fallbackImage;
+                    target.onerror = null; // Prevent infinite loop
+                  }}
                 />
               ) : (
                 <div className="h-64 flex items-center justify-center">
-                  <span className="text-gray-400">No image available</span>
+                  <img 
+                    src={fallbackImage} 
+                    alt="No image available"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
               )}
             </div>
@@ -237,13 +308,13 @@ const ServiceDetailPage = () => {
               <CardHeader>
                 <CardTitle>Service Actions</CardTitle>
                 <CardDescription>
-                  {user 
+                  {isAuthenticated 
                     ? 'Take action on this service'
                     : 'Login to interact with this service'}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {!user && (
+                {!isAuthenticated && (
                   <Button 
                     className="w-full bg-brand-300 hover:bg-brand-400"
                     onClick={() => navigate('/login')}
@@ -252,7 +323,7 @@ const ServiceDetailPage = () => {
                   </Button>
                 )}
                 
-                {user && currentRole === 'client' && (
+                {isAuthenticated && currentRole === 'client' && (
                   <Button 
                     className="w-full bg-brand-300 hover:bg-brand-400"
                     onClick={handleHire}
@@ -262,7 +333,7 @@ const ServiceDetailPage = () => {
                   </Button>
                 )}
                 
-                {user && currentRole === 'subcontractor' && (
+                {isAuthenticated && currentRole === 'subcontractor' && (
                   <Button 
                     className="w-full bg-brand-300 hover:bg-brand-400"
                     onClick={handleBid}
@@ -272,7 +343,7 @@ const ServiceDetailPage = () => {
                   </Button>
                 )}
                 
-                {user && currentRole === 'admin' && (
+                {isAuthenticated && currentRole === 'admin' && (
                   <div className="space-y-2">
                     <Button 
                       className="w-full bg-brand-300 hover:bg-brand-400"
@@ -292,7 +363,7 @@ const ServiceDetailPage = () => {
               </CardContent>
             </Card>
             
-            {user && (
+            {isAuthenticated && (
               <Card>
                 <CardHeader>
                   <CardTitle>Contact</CardTitle>
@@ -322,7 +393,7 @@ const ServiceDetailPage = () => {
           </div>
         </div>
       </div>
-    </Layout>
+    </div>
   );
 };
 

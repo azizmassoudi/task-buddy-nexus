@@ -1,23 +1,32 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { servicesAPI } from '../../lib/api';
+import { ServiceCategory, ServiceStatus } from '../../data/mockServices';
 
 interface Service {
   id: string;
   title: string;
   description: string;
   price: number;
-  category: string;
-  userId: string;
+  category: ServiceCategory;
+  location: string;
+  status: ServiceStatus;
+  postedBy: string;
+  postedDate: string;
+  imageUrl?: string;
+  estimatedHours?: number;
+  skills?: string[];
 }
 
 interface ServicesState {
   services: Service[];
+  currentService: Service | null;
   loading: boolean;
   error: string | null;
 }
 
 const initialState: ServicesState = {
   services: [],
+  currentService: null,
   loading: false,
   error: null,
 };
@@ -36,9 +45,9 @@ export const fetchServices = createAsyncThunk(
 
 export const createService = createAsyncThunk(
   'services/create',
-  async (serviceData: Omit<Service, 'id' | 'userId'>, { rejectWithValue }) => {
+  async (formData: FormData, { rejectWithValue }) => {
     try {
-      const response = await servicesAPI.create(serviceData);
+      const response = await servicesAPI.create(formData);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response.data);
@@ -70,10 +79,26 @@ export const deleteService = createAsyncThunk(
   }
 );
 
+export const fetchServiceById = createAsyncThunk(
+  'services/fetchById',
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const response = await servicesAPI.getById(id);
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
 const servicesSlice = createSlice({
   name: 'services',
   initialState,
-  reducers: {},
+  reducers: {
+    clearCurrentService: (state) => {
+      state.currentService = null;
+    }
+  },
   extraReducers: (builder) => {
     builder
       // Fetch Services
@@ -103,8 +128,22 @@ const servicesSlice = createSlice({
       // Delete Service
       .addCase(deleteService.fulfilled, (state, action) => {
         state.services = state.services.filter(service => service.id !== action.payload);
+      })
+      // Fetch Service by ID
+      .addCase(fetchServiceById.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchServiceById.fulfilled, (state, action) => {
+        state.loading = false;
+        state.currentService = action.payload;
+      })
+      .addCase(fetchServiceById.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
       });
   },
 });
 
+export const { clearCurrentService } = servicesSlice.actions;
 export default servicesSlice.reducer; 

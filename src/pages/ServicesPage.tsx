@@ -4,13 +4,7 @@ import { ServiceGrid } from '@/components/services/ServiceGrid';
 import { CategoryFilter } from '@/components/services/CategoryFilter';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { 
-  mockServices, 
-  getServicesByCategory, 
-  ServiceCategory, 
-  Service,
-  ServiceStatus 
-} from '@/data/mockServices';
+import { ServiceCategory, ServiceStatus } from '@/data/mockServices';
 import { Input } from '@/components/ui/input';
 import { Search, Filter, Plus } from 'lucide-react';
 import {
@@ -33,42 +27,52 @@ import {
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchServices } from '@/redux/slices/servicesSlice';
+import { RootState, AppDispatch } from '@/redux/store';
 
 const ServicesPage = () => {
   const { user, currentRole } = useAuth();
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
+  const { services, loading } = useSelector((state: RootState) => state.services);
 
   const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filteredServices, setFilteredServices] = useState<Service[]>(mockServices);
+  const [filteredServices, setFilteredServices] = useState(services);
   const [priceRange, setPriceRange] = useState([0, 5000]);
   const [statusFilter, setStatusFilter] = useState<ServiceStatus | 'All'>('All');
 
+  // Fetch services on component mount
   useEffect(() => {
-    let services = mockServices;
+    dispatch(fetchServices());
+  }, [dispatch]);
+
+  useEffect(() => {
+    let filtered = services;
     
     if (selectedCategory) {
-      services = getServicesByCategory(selectedCategory);
+      filtered = filtered.filter(service => service.category === selectedCategory);
     }
     
     if (searchTerm) {
-      services = services.filter(service => 
+      filtered = filtered.filter(service => 
         service.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         service.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         service.category.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
     
-    services = services.filter(
+    filtered = filtered.filter(
       service => service.price >= priceRange[0] && service.price <= priceRange[1]
     );
     
     if (statusFilter !== 'All') {
-      services = services.filter(service => service.status === statusFilter);
+      filtered = filtered.filter(service => service.status === statusFilter);
     }
     
-    setFilteredServices(services);
-  }, [selectedCategory, searchTerm, priceRange, statusFilter]);
+    setFilteredServices(filtered);
+  }, [selectedCategory, searchTerm, priceRange, statusFilter, services]);
 
   const handleCategoryChange = (category: ServiceCategory | null) => {
     setSelectedCategory(category);

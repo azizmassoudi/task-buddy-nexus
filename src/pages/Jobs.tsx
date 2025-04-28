@@ -2,10 +2,34 @@ import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../redux/store';
 import { fetchJobs, createJob, deleteJob } from '../redux/slices/jobsSlice';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { useToast } from '@/components/ui/use-toast';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const Jobs = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { jobs, loading, error } = useSelector((state: RootState) => state.jobs);
+  const { services } = useSelector((state: RootState) => state.services);
+  const { user } = useSelector((state: RootState) => state.auth);
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [newJob, setNewJob] = useState({
     title: '',
     description: '',
@@ -20,8 +44,28 @@ const Jobs = () => {
 
   const handleCreateJob = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
+
     try {
-      await dispatch(createJob(newJob)).unwrap();
+      // Validate required fields
+      if (!newJob.title || !newJob.description || !newJob.budget || !newJob.serviceId || !user?.id) {
+        throw new Error('Please fill in all required fields');
+      }
+
+      const jobData = {
+        ...newJob,
+        clientId: user.id,
+        status: 'open' as const,
+      };
+
+      await dispatch(createJob(jobData)).unwrap();
+      
+      toast({
+        title: 'Job created',
+        description: 'Your job has been created successfully.',
+      });
+
+      // Reset form
       setNewJob({
         title: '',
         description: '',
@@ -29,8 +73,17 @@ const Jobs = () => {
         serviceId: '',
         clientId: '',
       });
-    } catch (err) {
-      console.error('Failed to create job:', err);
+
+      // Refresh jobs list
+      dispatch(fetchJobs());
+    } catch (err: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: err.message || 'Failed to create job. Please try again.',
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -38,126 +91,132 @@ const Jobs = () => {
     if (window.confirm('Are you sure you want to delete this job?')) {
       try {
         await dispatch(deleteJob(id)).unwrap();
+        toast({
+          title: 'Job deleted',
+          description: 'The job has been deleted successfully.',
+        });
+        // Refresh jobs list
+        dispatch(fetchJobs());
       } catch (err) {
-        console.error('Failed to delete job:', err);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Failed to delete job. Please try again.',
+        });
       }
     }
   };
 
   return (
     <div className="space-y-6">
-      <div className="bg-white shadow rounded-lg p-6">
-        <h2 className="text-2xl font-bold text-gray-900">Jobs</h2>
-        <p className="mt-2 text-gray-600">Manage your jobs here.</p>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Jobs</CardTitle>
+          <CardDescription>Manage your jobs here.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleCreateJob} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="title">Title</Label>
+              <Input
+                id="title"
+                value={newJob.title}
+                onChange={(e) => setNewJob({ ...newJob, title: e.target.value })}
+                placeholder="Enter job title"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={newJob.description}
+                onChange={(e) => setNewJob({ ...newJob, description: e.target.value })}
+                placeholder="Enter job description"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="budget">Budget</Label>
+              <Input
+                id="budget"
+                type="number"
+                value={newJob.budget}
+                onChange={(e) => setNewJob({ ...newJob, budget: Number(e.target.value) })}
+                placeholder="Enter job budget"
+                required
+                min="0"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="serviceId">Service</Label>
+              <Select
+                value={newJob.serviceId}
+                onValueChange={(value) => setNewJob({ ...newJob, serviceId: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a service" />
+                </SelectTrigger>
+                <SelectContent>
+                  {services.map((service) => (
+                    <SelectItem key={service.id} value={service.id}>
+                      {service.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button 
+              type="submit" 
+              className="w-full"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Creating...' : 'Create Job'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
-      <div className="bg-white shadow rounded-lg p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Create New Job</h3>
-        <form onSubmit={handleCreateJob} className="space-y-4">
-          <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-              Title
-            </label>
-            <input
-              type="text"
-              id="title"
-              value={newJob.title}
-              onChange={(e) => setNewJob({ ...newJob, title: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-              Description
-            </label>
-            <textarea
-              id="description"
-              value={newJob.description}
-              onChange={(e) => setNewJob({ ...newJob, description: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="budget" className="block text-sm font-medium text-gray-700">
-              Budget
-            </label>
-            <input
-              type="number"
-              id="budget"
-              value={newJob.budget}
-              onChange={(e) => setNewJob({ ...newJob, budget: Number(e.target.value) })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="serviceId" className="block text-sm font-medium text-gray-700">
-              Service ID
-            </label>
-            <input
-              type="text"
-              id="serviceId"
-              value={newJob.serviceId}
-              onChange={(e) => setNewJob({ ...newJob, serviceId: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="clientId" className="block text-sm font-medium text-gray-700">
-              Client ID
-            </label>
-            <input
-              type="text"
-              id="clientId"
-              value={newJob.clientId}
-              onChange={(e) => setNewJob({ ...newJob, clientId: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          >
-            Create Job
-          </button>
-        </form>
-      </div>
-
-      <div className="bg-white shadow rounded-lg p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Your Jobs</h3>
-        {loading ? (
-          <p>Loading jobs...</p>
-        ) : error ? (
-          <p className="text-red-500">{error}</p>
-        ) : (
-          <div className="space-y-4">
-            {jobs.map((job) => (
-              <div key={job.id} className="border-b border-gray-200 pb-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h4 className="text-lg font-medium text-gray-900">{job.title}</h4>
-                    <p className="text-sm text-gray-500">{job.description}</p>
-                    <p className="text-sm text-gray-500">Budget: ${job.budget}</p>
-                    <p className="text-sm text-gray-500">Status: {job.status}</p>
-                    <p className="text-sm text-gray-500">Service ID: {job.serviceId}</p>
-                    <p className="text-sm text-gray-500">Client ID: {job.clientId}</p>
-                  </div>
-                  <button
-                    onClick={() => handleDeleteJob(job.id)}
-                    className="text-red-600 hover:text-red-800"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Your Jobs</CardTitle>
+          <CardDescription>View and manage your existing jobs.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <p>Loading jobs...</p>
+          ) : error ? (
+            <p className="text-red-500">{error}</p>
+          ) : (
+            <div className="space-y-4">
+              {jobs.map((job) => (
+                <Card key={job.id}>
+                  <CardContent className="pt-6">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-2">
+                        <h4 className="text-lg font-medium">{job.title}</h4>
+                        <p className="text-sm text-muted-foreground">{job.description}</p>
+                        <div className="flex gap-4 text-sm text-muted-foreground">
+                          <span>Budget: ${job.budget}</span>
+                          <span>Status: {job.status}</span>
+                          <span>Service ID: {job.serviceId}</span>
+                        </div>
+                      </div>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDeleteJob(job.id)}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };

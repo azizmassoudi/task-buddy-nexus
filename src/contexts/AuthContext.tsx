@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 
 // Define user roles
@@ -56,14 +55,18 @@ const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [currentRole, setCurrentRole] = useState<UserRole>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Check if there's a stored user in localStorage on initial load
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
-    if (storedUser) {
+    const storedToken = localStorage.getItem("token");
+    
+    if (storedUser && storedToken) {
       const parsedUser = JSON.parse(storedUser);
       setUser(parsedUser);
       setCurrentRole(parsedUser.role);
+      setIsAuthenticated(true);
     }
   }, []);
 
@@ -81,16 +84,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Set the user state
     setUser(foundUser);
     setCurrentRole(foundUser.role);
+    setIsAuthenticated(true);
 
-    // Store the user in localStorage for persistence
+    // Store the user and token in localStorage for persistence
     localStorage.setItem("user", JSON.stringify(foundUser));
+    localStorage.setItem("token", "mock-token"); // In a real app, this would be the actual token
   };
 
   // Logout function
   const logout = () => {
     setUser(null);
     setCurrentRole(null);
+    setIsAuthenticated(false);
     localStorage.removeItem("user");
+    localStorage.removeItem("token");
   };
 
   // Function to switch between roles (useful for testing)
@@ -110,7 +117,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <AuthContext.Provider
       value={{
         user,
-        isAuthenticated: !!user,
+        isAuthenticated,
         setUser,
         login,
         logout,

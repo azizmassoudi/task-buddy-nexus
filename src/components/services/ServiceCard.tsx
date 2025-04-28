@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Service } from '@/data/mockServices';
 import { Badge } from '@/components/ui/badge';
@@ -10,10 +9,33 @@ interface ServiceCardProps {
 
 export const ServiceCard: React.FC<ServiceCardProps> = ({ service }) => {
   const navigate = useNavigate();
+  const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
   const handleClick = () => {
     navigate(`/services/${service.id}`);
   };
+
+  const getImageUrl = (url: string | undefined) => {
+    if (!url) return null;
+    console.log('Original image URL:', url);
+    
+    // If the URL is already absolute, return it as is
+    if (url.startsWith('http')) {
+      console.log('Using absolute URL:', url);
+      return url;
+    }
+    
+    // If it's a relative URL, prepend the backend URL
+    const fullUrl = url.startsWith('/uploads/') 
+      ? `${backendUrl}${url}`
+      : `${backendUrl}/uploads/${url}`;
+    
+    console.log('Constructed image URL:', fullUrl);
+    return fullUrl;
+  };
+
+  // Add a local fallback image
+  const fallbackImage = '/images/placeholder.svg';
 
   return (
     <div 
@@ -24,13 +46,23 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service }) => {
         <div className="aspect-w-16 aspect-h-9 mb-4 bg-gray-100 rounded-md overflow-hidden">
           {service.imageUrl ? (
             <img 
-              src={`${service.imageUrl}?w=600&auto=format`} 
+              src={getImageUrl(service.imageUrl)} 
               alt={service.title}
               className="w-full h-48 object-cover"
+              onError={(e) => {
+                // If image fails to load, show local fallback
+                const target = e.target as HTMLImageElement;
+                target.src = fallbackImage;
+                target.onerror = null; // Prevent infinite loop
+              }}
             />
           ) : (
             <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
-              <span className="text-gray-400">No image</span>
+              <img 
+                src={fallbackImage} 
+                alt="No image available"
+                className="w-full h-full object-cover"
+              />
             </div>
           )}
         </div>

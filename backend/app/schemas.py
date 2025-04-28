@@ -10,7 +10,7 @@ class UserBase(BaseModel):
     email: EmailStr
     username: str
     full_name: Optional[str] = None
-    role: UserRoleType = 'client'  # Default role is client
+    role: UserRole = UserRole.client  # Default role is client
 
 class UserCreate(UserBase):
     password: str
@@ -37,6 +37,7 @@ class ServiceBase(BaseModel):
     description: str
     price: int
     category: str
+    imageUrl: str | None = None
 
 class ServiceCreate(ServiceBase):
     pass

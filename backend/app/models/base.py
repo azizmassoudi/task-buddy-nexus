@@ -38,6 +38,7 @@ class Service(Base):
     description = Column(Text)
     price = Column(Integer)
     category = Column(String)
+    imageUrl = Column(String, nullable=True)
     owner_id = Column(Integer, ForeignKey("users.id"))
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)

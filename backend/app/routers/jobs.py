@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List, Any
 
 from ..database import get_db
-from ..models.base import Job, User, Service
+from ..models.base import Job, User
 from ..schemas import JobCreate, Job as JobSchema
 from ..core.auth import get_current_user
 
@@ -13,18 +13,9 @@ router = APIRouter()
 def create_job(
     job: JobCreate,
     db: Session = Depends(get_db),
-    current_user: str = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ) -> Any:
-    db_user = db.query(User).filter(User.username == current_user).first()
-    db_service = db.query(Service).filter(Service.id == job.service_id).first()
-    
-    if db_service is None:
-        raise HTTPException(status_code=404, detail="Service not found")
-    
-    db_job = Job(
-        **job.dict(),
-        client_id=db_user.id
-    )
+    db_job = Job(**job.dict(), client_id=current_user.id, status="pending")
     db.add(db_job)
     db.commit()
     db.refresh(db_job)
@@ -35,10 +26,9 @@ def read_jobs(
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
-    current_user: str = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ) -> Any:
-    db_user = db.query(User).filter(User.username == current_user).first()
-    jobs = db.query(Job).filter(Job.client_id == db_user.id).offset(skip).limit(limit).all()
+    jobs = db.query(Job).filter(Job.client_id == current_user.id).offset(skip).limit(limit).all()
     return jobs
 
 @router.get("/{job_id}", response_model=JobSchema)

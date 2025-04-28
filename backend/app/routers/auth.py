@@ -20,6 +20,10 @@ from ..core.auth import (
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+@router.options("/{path:path}")
+async def options_handler():
+    return {}
+
 @router.post("/register", response_model=UserSchema)
 async def register(user: UserCreate, db: Session = Depends(get_db)) -> Any:
     try:

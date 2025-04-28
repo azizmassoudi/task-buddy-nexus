@@ -1,40 +1,48 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
-import { ServiceGrid } from '@/components/services/ServiceGrid';
+import ServiceGrid from '@/components/services/ServiceGrid';
 import { CategoryFilter } from '@/components/services/CategoryFilter';
 import { useAuth } from '@/contexts/AuthContext';
-import { 
-  mockServices, 
-  getServicesByCategory, 
-  ServiceCategory, 
-  Service 
-} from '@/data/mockServices';
+import { ServiceCategory } from '@/data/mockServices';
 import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchServices } from '@/redux/slices/servicesSlice';
+import { RootState, AppDispatch } from '@/redux/store';
 
 const Index = () => {
   const { user, currentRole } = useAuth();
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
+  const { services, loading } = useSelector((state: RootState) => state.services);
   const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | null>(null);
-  const [filteredServices, setFilteredServices] = useState<Service[]>(mockServices);
+  const [filteredServices, setFilteredServices] = useState(services);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Fetch services on component mount
+  useEffect(() => {
+    dispatch(fetchServices());
+  }, [dispatch]);
 
   // Filter services based on selected category and search term
   useEffect(() => {
-    let services = selectedCategory ? getServicesByCategory(selectedCategory) : mockServices;
-    
+    let filtered = services;
+   
+    if (selectedCategory) {
+      filtered = filtered.filter(service => service.category === selectedCategory);
+    }
+   
     if (searchTerm) {
-      services = services.filter(service => 
+      filtered = filtered.filter(service =>
         service.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         service.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         service.category.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-    
-    setFilteredServices(services);
-  }, [selectedCategory, searchTerm]);
+   
+    setFilteredServices(filtered);
+  }, [selectedCategory, searchTerm, services]);
 
   // Handle category change
   const handleCategoryChange = (category: ServiceCategory | null) => {
@@ -42,7 +50,7 @@ const Index = () => {
   };
 
   return (
-    <Layout>
+    <div>
       {/* Hero Section */}
       <section className="relative gradient-bg py-20 sm:py-32">
         <div className="absolute inset-0 overflow-hidden">
@@ -98,10 +106,10 @@ const Index = () => {
               <div className="mt-8">
                 <Button
                   className="bg-brand-300 hover:bg-brand-400"
-                  onClick={() => 
+                  onClick={() =>
                     navigate(
-                      currentRole === 'admin' 
-                        ? '/admin/dashboard' 
+                      currentRole === 'admin'
+                        ? '/admin/dashboard'
                         : currentRole === 'subcontractor'
                         ? '/contractor/dashboard'
                         : '/client/dashboard'
@@ -132,10 +140,10 @@ const Index = () => {
           />
 
           <ServiceGrid services={filteredServices} />
-          
+         
           <div className="text-center mt-12">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="border-brand-300 text-brand-500 hover:bg-brand-50"
               onClick={() => navigate('/services')}
             >
@@ -205,7 +213,7 @@ const Index = () => {
               </div>
               <div className="mt-8 flex lg:mt-0 lg:ml-8">
                 <div className="inline-flex rounded-md shadow">
-                  <Button 
+                  <Button
                     className="bg-white text-brand-600 hover:bg-brand-50"
                     onClick={() => navigate('/register')}
                   >
@@ -213,7 +221,7 @@ const Index = () => {
                   </Button>
                 </div>
                 <div className="ml-3 inline-flex rounded-md shadow">
-                  <Button 
+                  <Button
                     variant="outline"
                     className="bg-transparent border-white text-white hover:bg-white hover:text-brand-500"
                     onClick={() => navigate('/services')}
@@ -226,8 +234,9 @@ const Index = () => {
           </div>
         </div>
       </section>
-    </Layout>
+    </div>
   );
 };
 
 export default Index;
+

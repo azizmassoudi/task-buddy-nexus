@@ -1,7 +1,6 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth, UserRole } from '@/contexts/AuthContext';
+import { UserRole } from '@/contexts/AuthContext';
 import {
   Bell,
   Menu,
@@ -20,9 +19,37 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 export const Navbar = () => {
-  const { user, logout, currentRole, switchRole } = useAuth();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [authState, setAuthState] = useState({
+    user: null as any,
+    isAuthenticated: false
+  });
+
+  // Update auth state when localStorage changes
+  useEffect(() => {
+    const getAuthData = () => {
+      const userData = localStorage.getItem('userRole');
+      const token = localStorage.getItem('token');
+      return {
+        user: userData ? userData : null,
+        isAuthenticated: !!token
+      };
+    };
+
+    // Set initial state
+    setAuthState(getAuthData());
+
+    // Listen for storage changes
+    const handleStorageChange = () => {
+      setAuthState(getAuthData());
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  const { user, isAuthenticated } = authState;
 
   const roleLabels: Record<NonNullable<UserRole>, string> = {
     admin: 'Admin Dashboard',
@@ -34,10 +61,12 @@ export const Navbar = () => {
     navigate('/login');
   };
 
-  const handleSwitchRole = (role: UserRole) => {
-    if (role === null) return;
-    switchRole(role);
-    setIsMenuOpen(false);
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('role');
+    setAuthState({ user: null, isAuthenticated: false });
+    navigate('/login');
   };
 
   return (
@@ -74,7 +103,7 @@ export const Navbar = () => {
               >
                 About
               </a>
-              {user && currentRole === 'admin' && (
+              {user && user.role === 'admin' && (
                 <a
                   href="/admin/dashboard"
                   className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
@@ -93,14 +122,14 @@ export const Navbar = () => {
               </button>
               
               {/* Notification Bell */}
-              {user && (
+              {isAuthenticated && (
                 <button className="p-2 rounded-full text-gray-500 hover:text-gray-900 focus:outline-none">
                   <Bell className="h-5 w-5" />
                 </button>
               )}
 
               {/* User Menu */}
-              {user ? (
+              {isAuthenticated && user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button className="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-300">
@@ -132,28 +161,31 @@ export const Navbar = () => {
                       <p className="text-xs font-medium text-gray-500">SWITCH ROLE</p>
                     </DropdownMenuLabel>
                     <DropdownMenuItem
-                      className={`flex items-center ${currentRole === 'admin' ? 'bg-brand-50' : ''}`}
-                      onClick={() => handleSwitchRole('admin')}
+                      className={`flex items-center ${user.role === 'admin' ? 'bg-brand-50' : ''}`}
+                      onClick={() => navigate('/admin/dashboard')}
                     >
                       Admin View
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      className={`flex items-center ${currentRole === 'subcontractor' ? 'bg-brand-50' : ''}`}
-                      onClick={() => handleSwitchRole('subcontractor')}
+                      className={`flex items-center ${user.role === 'subcontractor' ? 'bg-brand-50' : ''}`}
+                      onClick={() => navigate('/contractor/dashboard')}
                     >
                       Contractor View
                     </DropdownMenuItem>
                     <DropdownMenuItem 
-                      className={`flex items-center ${currentRole === 'client' ? 'bg-brand-50' : ''}`}
-                      onClick={() => handleSwitchRole('client')}
+                      className={`flex items-center ${user.role === 'client' ? 'bg-brand-50' : ''}`}
+                      onClick={() => navigate('/client/dashboard')}
                     >
                       Client View
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem>Profile</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/profile')}>
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Profile</span>
+                    </DropdownMenuItem>
                     <DropdownMenuItem>Settings</DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={logout} className="text-red-500">
+                    <DropdownMenuItem onClick={handleLogout} className="text-red-500">
                       <LogOut className="mr-2 h-4 w-4" />
                       <span>Log out</span>
                     </DropdownMenuItem>
@@ -202,7 +234,7 @@ export const Navbar = () => {
             >
               About
             </a>
-            {user && currentRole === 'admin' && (
+            {user && user.role === 'admin' && (
               <a
                 href="/admin/dashboard"
                 className="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
@@ -212,7 +244,7 @@ export const Navbar = () => {
             )}
           </div>
 
-          {user ? (
+          {isAuthenticated && user ? (
             <div className="pt-4 pb-3 border-t border-gray-200">
               <div className="flex items-center px-4">
                 {user.avatar ? (
@@ -231,9 +263,9 @@ export const Navbar = () => {
                 <div className="px-4 py-2 text-sm text-gray-500 font-medium">SWITCH ROLE</div>
                 <a
                   href="#"
-                  onClick={() => handleSwitchRole('admin')}
+                  onClick={() => navigate('/admin/dashboard')}
                   className={`block px-4 py-2 text-base font-medium ${
-                    currentRole === 'admin'
+                    user.role === 'admin'
                       ? 'bg-brand-50 text-brand-700'
                       : 'text-gray-500 hover:bg-gray-100'
                   }`}
@@ -242,9 +274,9 @@ export const Navbar = () => {
                 </a>
                 <a
                   href="#"
-                  onClick={() => handleSwitchRole('subcontractor')}
+                  onClick={() => navigate('/contractor/dashboard')}
                   className={`block px-4 py-2 text-base font-medium ${
-                    currentRole === 'subcontractor'
+                    user.role === 'subcontractor'
                       ? 'bg-brand-50 text-brand-700'
                       : 'text-gray-500 hover:bg-gray-100'
                   }`}
@@ -253,9 +285,9 @@ export const Navbar = () => {
                 </a>
                 <a
                   href="#"
-                  onClick={() => handleSwitchRole('client')}
+                  onClick={() => navigate('/client/dashboard')}
                   className={`block px-4 py-2 text-base font-medium ${
-                    currentRole === 'client'
+                    user.role === 'client'
                       ? 'bg-brand-50 text-brand-700'
                       : 'text-gray-500 hover:bg-gray-100'
                   }`}
@@ -277,7 +309,7 @@ export const Navbar = () => {
                   </a>
                   <a
                     href="#"
-                    onClick={logout}
+                    onClick={handleLogout}
                     className="block px-4 py-2 text-base font-medium text-red-500 hover:bg-gray-100"
                   >
                     Log out

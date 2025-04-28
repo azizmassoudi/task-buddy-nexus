@@ -1,66 +1,39 @@
-
 import React from 'react';
-import { Layout } from '@/components/layout/Layout';
-import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const About = () => {
-  const navigate = useNavigate();
-
   return (
-    <Layout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="mb-6">
-          <Button 
-            variant="ghost" 
-            className="text-sm text-gray-500"
-            onClick={() => navigate('/')}
-          >
-            Back to Home
-          </Button>
-        </div>
+    <div className="container mx-auto px-4 py-8">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-3xl font-bold text-center">About Task Buddy Nexus</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="prose max-w-none">
+            <h2 className="text-2xl font-semibold">Our Mission</h2>
+            <p>
+              Task Buddy Nexus is dedicated to connecting skilled professionals with clients who need their expertise.
+              We believe in creating meaningful connections that benefit both parties through our innovative platform.
+            </p>
 
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">About Our Service Platform</h1>
-        
-        <div className="prose max-w-none">
-          <p className="text-lg mb-6">
-            Welcome to our comprehensive service platform where homeowners can find qualified professionals
-            for their home improvement and maintenance needs.
-          </p>
-          
-          <h2 className="text-2xl font-semibold text-gray-800 mt-8 mb-4">Our Mission</h2>
-          <p className="mb-6">
-            We aim to connect homeowners with skilled contractors and service providers to ensure
-            quality work and seamless experiences for all home improvement projects.
-          </p>
-          
-          <h2 className="text-2xl font-semibold text-gray-800 mt-8 mb-4">How It Works</h2>
-          <div className="grid md:grid-cols-3 gap-8 my-8">
-            <div className="bg-gray-50 p-6 rounded-lg">
-              <h3 className="text-xl font-medium mb-3">For Homeowners</h3>
-              <p>Browse services, read reviews, and hire trusted professionals for your home projects.</p>
-            </div>
-            
-            <div className="bg-gray-50 p-6 rounded-lg">
-              <h3 className="text-xl font-medium mb-3">For Contractors</h3>
-              <p>Find new clients, showcase your skills, and grow your business through our platform.</p>
-            </div>
-            
-            <div className="bg-gray-50 p-6 rounded-lg">
-              <h3 className="text-xl font-medium mb-3">For Service Providers</h3>
-              <p>Offer specialized services and connect with clients looking for your expertise.</p>
-            </div>
+            <h2 className="text-2xl font-semibold mt-6">What We Offer</h2>
+            <ul className="list-disc pl-6 space-y-2">
+              <li>Seamless project management and communication</li>
+              <li>Secure payment processing</li>
+              <li>Verified professional profiles</li>
+              <li>Real-time messaging and updates</li>
+              <li>Comprehensive service listings</li>
+            </ul>
+
+            <h2 className="text-2xl font-semibold mt-6">Our Team</h2>
+            <p>
+              We are a team of passionate individuals committed to revolutionizing how people connect and collaborate
+              in the professional services industry. Our platform is built with user experience and security in mind.
+            </p>
           </div>
-          
-          <h2 className="text-2xl font-semibold text-gray-800 mt-8 mb-4">Our Services</h2>
-          <p className="mb-6">
-            We cover a wide range of services including plumbing, electrical work, carpentry, 
-            landscaping, cleaning, and more. All our listed professionals are vetted to ensure
-            quality workmanship.
-          </p>
-        </div>
-      </div>
-    </Layout>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
